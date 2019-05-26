@@ -3,6 +3,8 @@ import { TestScheduler } from 'rxjs/testing'
 import { ReactiveCommand } from '../src'
 import { concat } from 'rxjs/operators'
 
+const trueFalse = { f: false, t: true }
+
 describe('ReactiveCommandService', () => {
   let testScheduler: TestScheduler
   beforeEach(() => {
@@ -23,10 +25,10 @@ describe('ReactiveCommandService', () => {
     })
     it('can pass can execute observable', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const canExecute = cold('f----', { f: false })
+        const canExecute = cold('f----', trueFalse)
         const command = ReactiveCommand.createFromObservable(param => of(param), canExecute)
 
-        expectObservable(command.canExecute).toBe('f', { f: false })
+        expectObservable(command.canExecute).toBe('(tf)', trueFalse)
       })
     })
   })
@@ -44,10 +46,10 @@ describe('ReactiveCommandService', () => {
     })
     it('can pass can execute observable', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const canExecute = cold('f----', { f: false })
+        const canExecute = cold('f----', trueFalse)
         const command = ReactiveCommand.createFromPromise(() => Promise.resolve(), canExecute)
 
-        expectObservable(command.canExecute).toBe('f', { f: false })
+        expectObservable(command.canExecute).toBe('(tf)', trueFalse)
       })
     })
   })
@@ -55,10 +57,10 @@ describe('ReactiveCommandService', () => {
   describe('create', () => {
     it('can pass can execute observable', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const canExecute = cold('f----', { f: false })
+        const canExecute = cold('f----', trueFalse)
         const command = ReactiveCommand.create(canExecute)
         expectObservable(command.execute())
-        expectObservable(command.canExecute).toBe('f', { f: false })
+        expectObservable(command.canExecute).toBe('(tf)', trueFalse)
       })
     })
   })
@@ -106,11 +108,11 @@ describe('ReactiveCommandService', () => {
       testScheduler.run(({ cold, expectObservable }) => {
         const executeMarble = 't-f-t|'
 
-        const execute = cold(executeMarble, { t: true, f: false })
+        const execute = cold(executeMarble, trueFalse)
         const command = ReactiveCommand.createFromObservable(() => execute)
         expectObservable(command.execute())
 
-        expectObservable(command.results).toBe('t-f-t', { t: true, f: false })
+        expectObservable(command.results).toBe('t-f-t', trueFalse)
       })
     })
   })
@@ -124,7 +126,7 @@ describe('ReactiveCommandService', () => {
         const execute = cold(executeMarble)
         const command = ReactiveCommand.createFromObservable(() => execute)
 
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
       })
     })
 
@@ -135,7 +137,7 @@ describe('ReactiveCommandService', () => {
 
         const execute = cold(executeMarble)
         const command = ReactiveCommand.createFromObservable(() => execute)
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { t: true, f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
         expectObservable(command.execute())
       })
     })
@@ -147,7 +149,7 @@ describe('ReactiveCommandService', () => {
 
         const execute = cold(executeMarble)
         const command = ReactiveCommand.createFromObservable(() => execute)
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { t: true, f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
         expectObservable(command.execute(), '^----!')
         expectSubscriptions(execute.subscriptions).toBe('^----!')
       })
@@ -160,7 +162,7 @@ describe('ReactiveCommandService', () => {
 
         const execute = cold(executeMarble)
         const command = ReactiveCommand.createFromObservable(() => execute)
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { t: true, f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
         expectObservable(command.execute())
       })
     })
@@ -171,7 +173,7 @@ describe('ReactiveCommandService', () => {
         const isExecutingMarble = '(ft)-f'
 
         const command = ReactiveCommand.createFromObservable(() => cold(executeMarble))
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { t: true, f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
         expectObservable(command.execute(), '^----!')
       })
     })
@@ -183,7 +185,7 @@ describe('ReactiveCommandService', () => {
 
         const command = ReactiveCommand.createFromObservable(() => cold(executeMarble))
 
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { t: true, f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
         expectObservable(command.execute(), '^')
         expectObservable(command.execute(), '-^')
       })
@@ -196,7 +198,7 @@ describe('ReactiveCommandService', () => {
 
         const command = ReactiveCommand.createFromObservable(() => cold(executeMarble))
 
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { t: true, f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
         expectObservable(command.execute(), '^').toBe('------(a|)')
         expectObservable(command.execute(), '-^').toBe('-------(a|)')
       })
@@ -210,7 +212,7 @@ describe('ReactiveCommandService', () => {
         let i = 0
         const execute = () => cold(i++ % 2 === 0 ? executeMarble : executeMarble1)
         const command = ReactiveCommand.createFromObservable(execute)
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { t: true, f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
         expectObservable(command.execute()).toBe('----#')
         expectObservable(command.execute()).toBe('-------(a|)')
       })
@@ -224,7 +226,7 @@ describe('ReactiveCommandService', () => {
         let i = 0
         const execute = () => cold(i++ % 2 === 0 ? executeMarble : executeMarble1)
         const command = ReactiveCommand.createFromObservable(execute)
-        expectObservable(command.isExecuting).toBe(isExecutingMarble, { t: true, f: false })
+        expectObservable(command.isExecuting).toBe(isExecutingMarble, trueFalse)
         expectObservable(command.execute()).toBe('------(a|)')
         expectObservable(command.execute()).toBe('--------#')
       })
@@ -240,7 +242,7 @@ describe('ReactiveCommandService', () => {
         const execute = cold(executeMarble)
         const command = ReactiveCommand.createFromObservable(() => execute)
 
-        expectObservable(command.canExecute).toBe(canExecuteMarble, { t: true })
+        expectObservable(command.canExecute).toBe(canExecuteMarble, trueFalse)
       })
     })
 
@@ -253,69 +255,69 @@ describe('ReactiveCommandService', () => {
         const execute = cold(executeMarble)
         const command = ReactiveCommand.createFromObservable(() => execute)
         expectObservable(command.execute(), executeSubscription)
-        expectObservable(command.canExecute).toBe(canExecuteMarble, { t: true, f: false })
+        expectObservable(command.canExecute).toBe(canExecuteMarble, trueFalse)
       })
     })
 
     it('when command is not executing then emits same values as input observable', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const canExecuteMarble = 't----f--t'
-        const resultMarble = '(ft)-f--t'
+        const canExecuteMarble = 't-f--t'
+        const resultMarble = 't-f--t'
 
-        const canExecute = cold(canExecuteMarble, { t: true, f: false })
+        const canExecute = cold(canExecuteMarble, trueFalse)
         const command = ReactiveCommand.createFromObservable(() => of(), canExecute)
 
-        expectObservable(command.canExecute).toBe(resultMarble, { t: true, f: false })
+        expectObservable(command.canExecute).toBe(resultMarble, trueFalse)
       })
     })
 
     it('when command is not executing and input canExecute observable completes then can execute does not emits complete value', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const canExecuteMarble = '(ft)-f'
+        const canExecuteMarble = 't-f'
 
-        const canExecute = cold('t----f|', { t: true, f: false })
+        const canExecute = cold('t-f|', trueFalse)
         const command = ReactiveCommand.createFromObservable(() => of(), canExecute)
 
-        expectObservable(command.canExecute).toBe(canExecuteMarble, { t: true, f: false })
+        expectObservable(command.canExecute).toBe(canExecuteMarble, trueFalse)
       })
     })
 
     it('when command is executing and input canExecute observable emits true value then value is ignored', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const expectedCanExecuteMarble = 'f--t'
-        const inputCanExecuteMarble = '-t-'
-        const executeMarble = '---|'
+        const expectedCanExecuteMarble = '(tf)-t'
+        const inputCanExecuteMarble = '----t-'
+        const executeMarble = '-----|'
 
-        const canExecute = cold(inputCanExecuteMarble, { t: true, f: false })
+        const canExecute = cold(inputCanExecuteMarble, trueFalse)
         const command = ReactiveCommand.createFromObservable(() => cold(executeMarble), canExecute)
-        expectObservable(command.canExecute).toBe(expectedCanExecuteMarble, { t: true, f: false })
+        expectObservable(command.canExecute).toBe(expectedCanExecuteMarble, trueFalse)
         expectObservable(command.execute())
       })
     })
 
     it('when command is executing and input canExecute observable emits false then after execution do not emits true', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const expectedCanExecuteMarble = 'f--'
+        const expectedCanExecuteMarble = 'tf-'
         const inputCanExecuteMarble = '-f'
         const executeMarble = '---|'
 
-        const canExecute = cold(inputCanExecuteMarble, { t: true, f: false })
+        const canExecute = cold(inputCanExecuteMarble, trueFalse)
         const command = ReactiveCommand.createFromObservable(() => cold(executeMarble), canExecute)
 
         expectObservable(command.execute())
-        expectObservable(command.canExecute).toBe(expectedCanExecuteMarble, { t: true, f: false })
+        expectObservable(command.canExecute).toBe(expectedCanExecuteMarble, trueFalse)
       })
     })
 
     it('when source observable returns an error then returns false', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const sourceCanExecuteMarble = '#----'
-        const canExecuteMarble = 'f'
+        const sourceCanExecuteMarble = '-#----'
+        const canExecuteMarble = 'tf'
 
-        const canExecute = cold(sourceCanExecuteMarble, { t: true })
+        const canExecute = cold(sourceCanExecuteMarble, trueFalse)
         const command = ReactiveCommand.createFromObservable(() => of(), canExecute)
 
-        expectObservable(command.canExecute).toBe(canExecuteMarble, { f: false })
+        expectObservable(command.canExecute).toBe(canExecuteMarble, trueFalse)
       })
     })
   })

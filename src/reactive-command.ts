@@ -119,7 +119,7 @@ export class ReactiveCommand<TParam, TResult> implements Command<TParam, TResult
         this.exceptions$.next(ex)
         return of(false)
       }),
-      startWith(false)
+      startWith(true)
     )
 
     const canExecuteFunc = (canEx: boolean, isEx: boolean) => canEx && !isEx
