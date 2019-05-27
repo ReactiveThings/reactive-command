@@ -68,7 +68,7 @@ export class ReactiveCommand<TParam, TResult, TError = any>
     return this.exceptions$
   }
 
-  public execute(parameter?: TParam): Observable<any> {
+  public execute(parameter?: TParam): Observable<TResult> {
     return defer(() => {
       this.executionInfo$.next(ExecutionInfo.CreateBegin<TResult>())
       return this._execute(parameter)
@@ -88,14 +88,14 @@ export class ReactiveCommand<TParam, TResult, TError = any>
     return this.execute(parameter).toPromise()
   }
 
-  private createResult$() {
+  private createResult$(): Observable<TResult> {
     return this.executionInfo$.pipe(
       filter((x: ExecutionInfo<TResult>) => x.Demarcation === ExecutionDemarcation.Result),
-      map((x: ExecutionInfo<TResult>) => x.Result as TResult)
+      map((x: ExecutionInfo<TResult>) => x.Result!)
     )
   }
 
-  private createIsExecuting$() {
+  private createIsExecuting$(): Observable<boolean> {
     return this.executionInfo$.pipe(
       scan((acc: number, next: ExecutionInfo<TResult>) => {
         if (next.Demarcation === ExecutionDemarcation.Begin) {
@@ -115,7 +115,7 @@ export class ReactiveCommand<TParam, TResult, TError = any>
     )
   }
 
-  private createCanExecute$(canExecute: Observable<boolean>) {
+  private createCanExecute$(canExecute: Observable<boolean>): Observable<boolean> {
     canExecute = canExecute.pipe(
       catchError(ex => {
         this.exceptions$.next(ex)
