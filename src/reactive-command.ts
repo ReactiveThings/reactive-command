@@ -16,13 +16,14 @@ import { Command } from './command'
 import { ExecutionInfo } from './internal/execution-info'
 import { ExecutionDemarcation } from './internal/execution-demarcation'
 
-export class ReactiveCommand<TParam, TResult> implements Command<TParam, TResult> {
+export class ReactiveCommand<TParam, TResult, TError = any>
+  implements Command<TParam, TResult, TError> {
   private readonly _execute: (param: TParam | undefined) => Observable<TResult>
 
   private readonly isExecuting$: Observable<boolean>
   private readonly canExecute$: Observable<boolean>
   public readonly results: Observable<TResult>
-  private readonly exceptions$: Subject<any> = new Subject<any>()
+  private readonly exceptions$: Subject<TError> = new Subject<TError>()
   private readonly executionInfo$ = new Subject<ExecutionInfo<TResult>>()
 
   constructor(

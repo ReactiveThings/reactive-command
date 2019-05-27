@@ -1,11 +1,11 @@
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs'
 
-export interface CommandExecutionInfo<T> {
-    results: Observable<T>;
+export interface CommandExecutionInfo<TResult, TError> {
+  results: Observable<TResult>
 
-    canExecute: Observable<boolean>;
+  canExecute: Observable<boolean>
 
-    isExecuting: Observable<boolean>;
+  isExecuting: Observable<boolean>
 
-    errors: Observable<any>;
+  errors: Observable<TError>
 }
