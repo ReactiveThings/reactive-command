@@ -66,6 +66,20 @@ describe('ReactiveCommandService', () => {
   })
 
   describe('errors', () => {
+    it('can specify type of an error on reactive command creation', () => {
+      testScheduler.run(({ cold, expectObservable }) => {
+        const error = new Error()
+        const executeMarble = '--#'
+        const errorsMarble = '--e'
+
+        const execute = cold(executeMarble, undefined, error)
+        const command = new ReactiveCommand<number, string, Error>(() => execute)
+        expectObservable(command.execute())
+
+        expectObservable(command.errors).toBe(errorsMarble, { e: error })
+      })
+    })
+
     it('when observable throws exception then errors emits object with an error', () => {
       testScheduler.run(({ cold, expectObservable }) => {
         const error = new Error()

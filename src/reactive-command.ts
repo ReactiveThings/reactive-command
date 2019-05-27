@@ -13,11 +13,12 @@ import {
   publishLast
 } from 'rxjs/operators'
 import { Command } from './command'
+import { CommandExecutionInfo } from './command-execution-info'
 import { ExecutionInfo } from './internal/execution-info'
 import { ExecutionDemarcation } from './internal/execution-demarcation'
 
 export class ReactiveCommand<TParam, TResult, TError = any>
-  implements Command<TParam, TResult, TError> {
+  implements Command<TParam, TResult>, CommandExecutionInfo<TResult, TError> {
   private readonly _execute: (param: TParam | undefined) => Observable<TResult>
 
   private readonly isExecuting$: Observable<boolean>
@@ -40,18 +41,18 @@ export class ReactiveCommand<TParam, TResult, TError = any>
   public static createFromObservable<TParam, TResult>(
     execute: (param?: TParam) => Observable<TResult>,
     canExecute?: Observable<boolean>
-  ): Command<TParam, TResult> {
+  ): ReactiveCommand<TParam, TResult> {
     return new ReactiveCommand<TParam, TResult>(execute, canExecute)
   }
 
   public static createFromPromise<TParam, TResult>(
     execute: (param?: TParam) => Promise<TResult>,
     canExecute?: Observable<boolean>
-  ): Command<TParam, TResult> {
+  ): ReactiveCommand<TParam, TResult> {
     return new ReactiveCommand<TParam, TResult>(param => from(execute(param)), canExecute)
   }
 
-  public static create(canExecute?: Observable<boolean>): Command<any, any> {
+  public static create(canExecute?: Observable<boolean>): ReactiveCommand<any, any> {
     return ReactiveCommand.createFromObservable<any, any>(p => of(p), canExecute)
   }
 
@@ -63,7 +64,7 @@ export class ReactiveCommand<TParam, TResult, TError = any>
     return this.isExecuting$
   }
 
-  get errors(): Observable<any> {
+  get errors(): Observable<TError> {
     return this.exceptions$
   }
 
