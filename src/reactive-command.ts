@@ -15,7 +15,7 @@ import {
 import { Command } from './command'
 import { CommandExecutionInfo } from './command-execution-info'
 import { ExecutionInfo } from './internal/execution-info'
-import { ExecutionDemarcation } from './internal/execution-demarcation'
+import { ExecutionState } from './internal/execution-state'
 
 export class ReactiveCommand<TParam, TResult, TError = any>
   implements Command<TParam, TResult>, CommandExecutionInfo<TResult, TError> {
@@ -70,15 +70,15 @@ export class ReactiveCommand<TParam, TResult, TError = any>
 
   public execute(parameter?: TParam): Observable<TResult> {
     return defer(() => {
-      this.executionInfo$.next(ExecutionInfo.CreateBegin<TResult>())
+      this.executionInfo$.next(ExecutionInfo.begin<TResult>())
       return this._execute(parameter)
     }).pipe(
-      tap(result => this.executionInfo$.next(ExecutionInfo.CreateResult(result))),
+      tap(result => this.executionInfo$.next(ExecutionInfo.result(result))),
       catchError(ex => {
         this.exceptions$.next(ex)
         return throwError(ex)
       }),
-      finalize(() => this.executionInfo$.next(ExecutionInfo.CreateEnd<TResult>())),
+      finalize(() => this.executionInfo$.next(ExecutionInfo.end<TResult>())),
       publishLast(),
       refCount()
     )
@@ -90,19 +90,19 @@ export class ReactiveCommand<TParam, TResult, TError = any>
 
   private createResult$(): Observable<TResult> {
     return this.executionInfo$.pipe(
-      filter((x: ExecutionInfo<TResult>) => x.Demarcation === ExecutionDemarcation.Result),
-      map((x: ExecutionInfo<TResult>) => x.Result!)
+      filter((x: ExecutionInfo<TResult>) => x.state === ExecutionState.Result),
+      map((x: ExecutionInfo<TResult>) => x.result!)
     )
   }
 
   private createIsExecuting$(): Observable<boolean> {
     return this.executionInfo$.pipe(
       scan((acc: number, next: ExecutionInfo<TResult>) => {
-        if (next.Demarcation === ExecutionDemarcation.Begin) {
+        if (next.state === ExecutionState.Begin) {
           return acc + 1
         }
 
-        if (next.Demarcation === ExecutionDemarcation.End) {
+        if (next.state === ExecutionState.End) {
           return acc - 1
         }
         return acc

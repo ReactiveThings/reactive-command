@@ -1,27 +1,17 @@
-import { ExecutionDemarcation } from './execution-demarcation';
+import { ExecutionState } from './execution-state'
 
 export class ExecutionInfo<TResult> {
+  constructor(public readonly state: ExecutionState, public readonly result?: TResult) {}
 
-  constructor(private readonly demarcation: ExecutionDemarcation, private readonly result?: TResult) {
+  public static begin<TResult>(): ExecutionInfo<TResult> {
+    return new ExecutionInfo(ExecutionState.Begin)
   }
 
-  get Demarcation(): ExecutionDemarcation {
-      return this.demarcation;
+  public static result<TResult>(result: TResult): ExecutionInfo<TResult> {
+    return new ExecutionInfo(ExecutionState.Result, result)
   }
 
-  get Result(): TResult | undefined {
-      return this.result;
-  }
-
-  public static CreateBegin<TResult>(): ExecutionInfo<TResult> {
-      return new ExecutionInfo(ExecutionDemarcation.Begin);
-  }
-
-  public static CreateResult<TResult>(result: TResult): ExecutionInfo<TResult> {
-      return new ExecutionInfo(ExecutionDemarcation.Result, result);
-  }
-
-  public static CreateEnd<TResult>(): ExecutionInfo<TResult> {
-      return new ExecutionInfo(ExecutionDemarcation.End);
+  public static end<TResult>(): ExecutionInfo<TResult> {
+    return new ExecutionInfo(ExecutionState.End)
   }
 }

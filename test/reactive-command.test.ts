@@ -5,7 +5,7 @@ import { concat } from 'rxjs/operators'
 
 const trueFalse = { f: false, t: true }
 
-describe('ReactiveCommandService', () => {
+describe('Reactive Command', () => {
   let testScheduler: TestScheduler
   beforeEach(() => {
     testScheduler = new TestScheduler((actual, expected) => {
