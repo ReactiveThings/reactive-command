@@ -19,11 +19,22 @@ import { ExecutionState } from './internal/execution-state'
 
 export class ReactiveCommand<TParam, TResult, TError = any>
   implements Command<TParam, TResult>, CommandExecutionInfo<TResult, TError> {
+  public readonly results: Observable<TResult>
+  get canExecute(): Observable<boolean> {
+    return this.canExecute$
+  }
+
+  get isExecuting(): Observable<boolean> {
+    return this.isExecuting$
+  }
+
+  get errors(): Observable<TError> {
+    return this.exceptions$
+  }
   private readonly _execute: (param: TParam | undefined) => Observable<TResult>
 
   private readonly isExecuting$: Observable<boolean>
   private readonly canExecute$: Observable<boolean>
-  public readonly results: Observable<TResult>
   private readonly exceptions$: Subject<TError> = new Subject<TError>()
   private readonly executionInfo$ = new Subject<ExecutionInfo<TResult>>()
 
@@ -54,18 +65,6 @@ export class ReactiveCommand<TParam, TResult, TError = any>
 
   public static create(canExecute?: Observable<boolean>): ReactiveCommand<any, any> {
     return ReactiveCommand.createFromObservable<any, any>(p => of(p), canExecute)
-  }
-
-  get canExecute(): Observable<boolean> {
-    return this.canExecute$
-  }
-
-  get isExecuting(): Observable<boolean> {
-    return this.isExecuting$
-  }
-
-  get errors(): Observable<TError> {
-    return this.exceptions$
   }
 
   public execute(parameter?: TParam): Observable<TResult> {
