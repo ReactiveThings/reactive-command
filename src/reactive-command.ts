@@ -90,7 +90,9 @@ export class ReactiveCommand<TParam, TResult, TError = any>
   private createResult$(): Observable<TResult> {
     return this.executionInfo$.pipe(
       filter((x: ExecutionInfo<TResult>) => x.state === ExecutionState.Result),
-      map((x: ExecutionInfo<TResult>) => x.result!)
+      map((x: ExecutionInfo<TResult>) => x.result!),
+      publishReplay(1),
+      refCount()
     )
   }
 
