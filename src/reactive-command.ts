@@ -29,13 +29,13 @@ export class ReactiveCommand<TParam, TResult, TError = any>
   }
 
   get errors(): Observable<TError> {
-    return this.exceptions$
+    return this.errors$
   }
   private readonly _execute: (param: TParam | undefined) => Observable<TResult>
 
   private readonly isExecuting$: Observable<boolean>
   private readonly canExecute$: Observable<boolean>
-  private readonly exceptions$: Subject<TError> = new Subject<TError>()
+  private readonly errors$: Subject<TError> = new Subject<TError>()
   private readonly executionInfo$ = new Subject<ExecutionInfo<TResult>>()
 
   constructor(
@@ -74,7 +74,7 @@ export class ReactiveCommand<TParam, TResult, TError = any>
     }).pipe(
       tap(result => this.executionInfo$.next(ExecutionInfo.result(result))),
       catchError(ex => {
-        this.exceptions$.next(ex)
+        this.errors$.next(ex)
         return throwError(ex)
       }),
       finalize(() => this.executionInfo$.next(ExecutionInfo.end<TResult>())),
@@ -119,7 +119,7 @@ export class ReactiveCommand<TParam, TResult, TError = any>
   private createCanExecute$(canExecute: Observable<boolean>): Observable<boolean> {
     canExecute = canExecute.pipe(
       catchError(ex => {
-        this.exceptions$.next(ex)
+        this.errors$.next(ex)
         return of(false)
       }),
       startWith(true)
