@@ -1,4 +1,13 @@
-import { Subject, throwError, of, from, combineLatest, defer, Observable } from 'rxjs'
+import {
+  Subject,
+  throwError,
+  of,
+  from,
+  combineLatest,
+  defer,
+  Observable,
+  BehaviorSubject,
+} from 'rxjs'
 import {
   catchError,
   startWith,
@@ -6,16 +15,12 @@ import {
   publishReplay,
   refCount,
   map,
-  scan,
-  filter,
   tap,
   finalize,
-  publishLast
+  publishLast,
 } from 'rxjs/operators'
 import { Command } from './command'
 import { CommandExecutionInfo } from './command-execution-info'
-import { ExecutionInfo } from './internal/execution-info'
-import { ExecutionState } from './internal/execution-state'
 
 export class ReactiveCommand<TParam, TResult, TError = any>
   implements Command<TParam, TResult>, CommandExecutionInfo<TResult, TError> {
@@ -36,7 +41,8 @@ export class ReactiveCommand<TParam, TResult, TError = any>
   private readonly isExecuting$: Observable<boolean>
   private readonly canExecute$: Observable<boolean>
   private readonly errors$: Subject<TError> = new Subject<TError>()
-  private readonly executionInfo$ = new Subject<ExecutionInfo<TResult>>()
+  private readonly results$ = new Subject<TResult>()
+  private readonly inFlightCount$ = new BehaviorSubject<number>(0)
 
   constructor(
     execute: (param: TParam | undefined) => Observable<TResult>,
@@ -44,9 +50,13 @@ export class ReactiveCommand<TParam, TResult, TError = any>
   ) {
     this._execute = execute
 
-    this.isExecuting$ = this.createIsExecuting$()
+    this.isExecuting$ = this.inFlightCount$.pipe(
+      map(inFlightCount => inFlightCount > 0),
+      distinctUntilChanged()
+    )
+
     this.canExecute$ = this.createCanExecute$(canExecute)
-    this.results = this.createResult$()
+    this.results = this.results$
   }
 
   public static createFromObservable<TParam, TResult>(
@@ -69,15 +79,17 @@ export class ReactiveCommand<TParam, TResult, TError = any>
 
   public execute(parameter?: TParam): Observable<TResult> {
     return defer(() => {
-      this.executionInfo$.next(ExecutionInfo.begin<TResult>())
+      this.inFlightCount$.next(this.inFlightCount$.value + 1)
       return this._execute(parameter)
     }).pipe(
-      tap(result => this.executionInfo$.next(ExecutionInfo.result(result))),
+      tap(result => this.results$.next(result)),
       catchError(ex => {
         this.errors$.next(ex)
         return throwError(ex)
       }),
-      finalize(() => this.executionInfo$.next(ExecutionInfo.end<TResult>())),
+      finalize(() => {
+        this.inFlightCount$.next(this.inFlightCount$.value - 1)
+      }),
       publishLast(),
       refCount()
     )
@@ -85,35 +97,6 @@ export class ReactiveCommand<TParam, TResult, TError = any>
 
   public executeAsync(parameter?: TParam): Promise<TResult> {
     return this.execute(parameter).toPromise()
-  }
-
-  private createResult$(): Observable<TResult> {
-    return this.executionInfo$.pipe(
-      filter((x: ExecutionInfo<TResult>) => x.state === ExecutionState.Result),
-      map((x: ExecutionInfo<TResult>) => x.result!),
-      publishReplay(1),
-      refCount()
-    )
-  }
-
-  private createIsExecuting$(): Observable<boolean> {
-    return this.executionInfo$.pipe(
-      scan((acc: number, next: ExecutionInfo<TResult>) => {
-        if (next.state === ExecutionState.Begin) {
-          return acc + 1
-        }
-
-        if (next.state === ExecutionState.End) {
-          return acc - 1
-        }
-        return acc
-      }, 0),
-      map((inFlightCount: number) => inFlightCount > 0),
-      startWith(false),
-      distinctUntilChanged(),
-      publishReplay(1),
-      refCount()
-    )
   }
 
   private createCanExecute$(canExecute: Observable<boolean>): Observable<boolean> {

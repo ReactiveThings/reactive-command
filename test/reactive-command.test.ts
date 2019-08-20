@@ -156,6 +156,18 @@ describe('Reactive Command', () => {
       })
     })
 
+    it('when subscription is after command is executing ', () => {
+      testScheduler.run(({ cold, expectObservable }) => {
+        const executeMarble = '------a----|'
+        const isExecutingMarble = '-t---------f'
+
+        const execute = cold(executeMarble)
+        const command = ReactiveCommand.createFromObservable(() => execute)
+        expectObservable(command.isExecuting, '-^').toBe(isExecutingMarble, trueFalse)
+        expectObservable(command.execute())
+      })
+    })
+
     it('when command is unsubscribed before observable completes then immediately return false and unsubscribe from source', () => {
       testScheduler.run(({ cold, expectObservable, expectSubscriptions }) => {
         const executeMarble = '------a----|'
@@ -311,7 +323,7 @@ describe('Reactive Command', () => {
 
     it('when command is executing and input canExecute observable emits false then after execution do not emits true', () => {
       testScheduler.run(({ cold, expectObservable }) => {
-        const expectedCanExecuteMarble = 'tf-'
+        const expectedCanExecuteMarble = 'f-'
         const inputCanExecuteMarble = '-f'
         const executeMarble = '---|'
 
